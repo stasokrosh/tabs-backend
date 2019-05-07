@@ -1,17 +1,24 @@
 import express from 'express'
 import bodyParser from 'body-parser'
-import './util/db'
+import cors from 'cors'
+import './util/db-config'
 import * as Middleware from './util/middleware'
 import UserRouter from './user'
 import GroupRouter from './group'
 import TabRouter from './tab'
 import AuthRouter from './auth'
+// import https from 'https'
+// import fs from 'fs'
 
 const app = express();
 
+app.use(cors());
+
 //body-parser
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
+
+process.env.JWT_SECRET = 'yarmolik'
 
 app.use('*', Middleware.parseJWT);
 
@@ -22,6 +29,7 @@ app.use('/tab', TabRouter);
 app.use('/auth', AuthRouter);
 
 let port = 1234;
-app.listen(port, () => {
-    console.log('Server is up and running on port numner ' + port);
-});
+// https.createServer({ key: fs.readFileSync('server.key'), cert: fs.readFileSync('server.cert')}, app)
+    app.listen(port, () => {
+        console.log('Server is up and running on port numner ' + port);
+    });

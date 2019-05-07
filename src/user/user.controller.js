@@ -15,7 +15,7 @@ export function create(req, res) {
 };
 
 export function findOne(req, res) {
-    User.findById(req.params.id, (err, user) => {
+    User.findOne({name : req.params.name}, (err, user) => {
         if (err)
             res.status(500).send(err.message);
         res.send(user);
@@ -33,9 +33,9 @@ export function findAll(req, res) {
 export function update(req, res) {
     let user = {
         name: req.body.name,
-        favourites : req.body.favourites
+        favourites: req.body.favourites
     };
-    User.findByIdAndUpdate(req.params.id, user, (err) => {
+    User.findOneAndUpdate({name : req.body.name}, user, (err) => {
         if (err)
             res.status(500).send(err.message);
         res.end();
@@ -43,7 +43,7 @@ export function update(req, res) {
 }
 
 export function remove(req, res) {
-    User.findByIdAndRemove(req.params.id, (err, user) => {
+    User.findByOneAndRemove(req.params.name, (err, user) => {
         if (err)
             res.status(500).send(err.message);
         res.send(user);
@@ -51,7 +51,7 @@ export function remove(req, res) {
 }
 
 export function addFavourite(req, res) {
-    User.findById(req.params.id, (err, user) => {
+    User.findOne({name : req.params.name}, (err, user) => {
         if (err) {
             res.status(500).send(err.message);
         } else {
@@ -66,7 +66,7 @@ export function addFavourite(req, res) {
 }
 
 export function removeFavourite(req, res) {
-    User.findById(req.params.id, (err, user) => {
+    User.findOne({name : req.params.name}, (err, user) => {
         if (err) {
             res.status(500).send(err.message);
         } else {

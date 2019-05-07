@@ -1,19 +1,22 @@
 import mongoose from 'mongoose'
 
-const ObjectId = mongoose.Schema.ObjectId;
+export const TAB_USER_RIGHTS = {
+    READ : 'read',
+    WRITE : 'write'
+};
 
-let GroupSchema = new mongoose.Schema({
+let TabSchema = new mongoose.Schema({
     name: { type: String, required: true, max: 20, unique: true },
-    creatorId: { type: ObjectId, required: true },
-    groupId: ObjectId,
+    creator: { type: String, required: true },
+    group: String,
     createDate: { type: Date, default: Date.now },
     users: [{
-        userId: ObjectId,
-        rights: [{type: String, enum : ["read", "write"]}]
+        name: String,
+        rights: [{type: String, enum : [TAB_USER_RIGHTS.READ, TAB_USER_RIGHTS.WRITE]}]
     }],
     public : Boolean
 });
 
-const Group = mongoose.model('Group', GroupSchema);
+const Tab = mongoose.model('Tab', TabSchema);
 
-export default Group;
+export default Tab;
