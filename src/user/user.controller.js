@@ -1,86 +1,108 @@
-import User from './user.model'
-import { getHash } from '../util'
+import User, { USER_ROLES } from './user.model'
+import { getHash, handleError, ERROR_STATUSES } from '../util'
+import { isUndefined } from 'util';
+import Group from '../group/group.model';
 
-export function create(req, res) {
-    let user = new User({
-        name: req.body.name,
-        passwordHash: getHash(req.body.password),
-        role: req.body.role
-    });
-    user.save((err, user) => {
-        if (err)
-            res.status(500).send(err.message);
-        res.send(user);
-    });
-};
-
-export function findOne(req, res) {
-    User.findOne({name : req.params.name}, (err, user) => {
-        if (err)
-            res.status(500).send(err.message);
-        res.send(user);
-    })
-};
-
-export function findAll(req, res) {
-    User.find((err, users) => {
-        if (err)
-            res.status(500).send(err.message);
-        res.send(users);
-    })
-};
-
-export function update(req, res) {
-    let user = {
-        name: req.body.name,
-        favourites: req.body.favourites
-    };
-    User.findOneAndUpdate({name : req.body.name}, user, (err) => {
-        if (err)
-            res.status(500).send(err.message);
-        res.end();
-    });
+function convertUser(user, auth) {
+    let res = {};
+    return res;
 }
 
-export function remove(req, res) {
-    User.findByOneAndRemove(req.params.name, (err, user) => {
-        if (err)
-            res.status(500).send(err.message);
-        res.send(user);
-    });
+function convertUsers(users, auth) {
+    return users.map(user => convertUsers(user, auth));
 }
 
-export function addFavourite(req, res) {
-    User.findOne({name : req.params.name}, (err, user) => {
-        if (err) {
-            res.status(500).send(err.message);
+export async function create(req, res) {
+    let auth = req.decoded;
+    try {
+        let user = new User({
+            name: req.body.name,
+            passwordHash: getHash(req.body.password),
+            role: req.body.role
+        });
+        user = await user.save()
+        res.send(convertUser(user, auth));
+    } catch (err) {
+        handleError(err, res);
+    }
+};
+
+export async function findOne(req, res) {
+    let auth = req.decoded;
+    try {
+        let user = await User.findOne({ name: req.params.name }).exec();
+        if (!user)
+            res.status(ERROR_STATUSES.NOT_FOUND).end();
+        else
+            res.send(convertUser(user, auth));
+    } catch (err) {
+        handleError(err, res);
+    }
+};
+
+export async function findAll(req, res) {
+    let auth = req.decoded;
+    try {
+        let users = await User.find().exec();
+        res.send(convertUsers(users, auth));
+    } catch (err) {
+        handleError(err, res);
+    }
+};
+
+export async function findByGroup(req, res) {
+    let auth = req.decoded;
+    try {
+        let group = await Group.findOne({name : req.params.name});
+        if (!group) {
+            res.status(ERROR_STATUSES.NOT_FOUND);
         } else {
-            user.favourites.push(req.body.tabId)
-            tab.save((err) => {
-                if (err)
-                    res.status(500).send(err.message);
-                res.end();
-            });
+            let users = await User.find({groups : group.name}).exec();
+            res.send(convertUsers(users, auth));
         }
-    });
-}
+    } catch (err) {
+        handleError(err, res);
+    }
+};
 
-export function removeFavourite(req, res) {
-    User.findOne({name : req.params.name}, (err, user) => {
-        if (err) {
-            res.status(500).send(err.message);
+export async function update(req, res) {
+    let auth = req.decoded;
+    try {
+        let user = await User.findOne({ name: req.params.name });
+        if (!user) {
+            res.status(ERROR_STATUSES.NOT_FOUND).end();
         } else {
-            let index = user.favourites.indexOf(req.params.tabId);
-            if (index === -1) {
-                res.status(404).end();
+            if (auth && auth.name !== req.params.name) {
+                if (!isUndefined(req.body.name))
+                    user.name = req.body.name;
+                if (!isUndefined(req.body.favouriteTabs))
+                    user.favouriteTabs = req.body.favouriteTabs;
+                user = await user.save();
+                res.send(convertUser(user,auth));
             } else {
-                user.favourites[index].remove();
-                tab.save((err) => {
-                    if (err)
-                        res.status(500).send(err.message);
-                    res.end();
-                });
+                res.status(ERROR_STATUSES.FORBIDDEN).end();
             }
         }
-    });
+    } catch (err) {
+        handleError(err, res);
+    }
+}
+
+export async function remove(req, res) {
+    let auth = req.decoded;
+    try {
+        let user = await User.findOne({ name: req.params.name });
+        if (!user) {
+            res.status(ERROR_STATUSES.NOT_FOUND).end();
+        } else {
+            if (auth && auth.name !== req.params.name || auth && auth.role === USER_ROLES.ADMIN) {
+                await user.remove();
+                res.end();
+            } else {
+                res.status(ERROR_STATUSES.FORBIDDEN).end();
+            }
+        }
+    } catch (err) {
+        handleError(err, res);
+    }
 }

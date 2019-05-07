@@ -1,114 +1,154 @@
 import Group from './group.model'
+import { handleError } from '../util';
 
-export function create(req, res) {
-    let group = new Group({
-        name: req.body.name,
-        creatorId: req.body.creatorId,
-        members: req.body.members,
-        public : req.body.public
-    });
-    group.save((err, group) => {
-        if (err)
-            res.status(500).send(err.message);
-        res.send(group);
-    });
-};
-
-export function findOne(req, res) {
-    Group.findById(req.params.id, (err, group) => {
-        if (err)
-            res.status(500).send(err.message);
-        res.send(group);
-    })
-};
-
-export function findAll(req, res) {
-    Group.find((err, groups) => {
-        if (err)
-            res.status(500).send(err.message);
-        res.send(groups);
-    })
-};
-
-export function update(req, res) {
-    let group = new Group({
-        name: req.body.name,
-        members: req.body.members,
-        public : req.body.public
-    });
-    Group.findByIdAndUpdate(req.params.id, group, (err) => {
-        if (err)
-            res.status(500).send(err.message);
-        res.end();
-    });
+function convertGroup(group, auth) {
+    let res = {
+    }
+    return res;
 }
 
-export function remove(req, res) {
-    Group.findByIdAndRemove(req.params.id, (err, group) => {
-        if (err)
-            res.status(500).send(err.message);
-        res.send(group);
-    });
+function convertGroups(groups, auth) {
+    return groups.map(group => convertGroup(group, auth));
 }
 
-export function addMember(req, res) {
-    let member = {
-        userId: req.body.userId,
-        rights: req.body.rights
-    };
-    Group.findById(req.params.id, (err, group) => {
-        if (err) {
-            res.status(500).send(err.message);
+function filterGroupsWithUser(query, auth, user) {
+    if (auth) {
+        if (auth.role === USER_ROLES.ADMIN) {
+            return query;
         } else {
-            group.members.push(member);
-            group.save((err) => {
-                if (err)
-                    res.status(500).send(err.message);
-                res.end();
-            });
+            return query.or([
+                { public: true },
+                { name: { '$in': user.groups } },
+                { creator: user.name },
+            ]);
         }
-    });
+    } else {
+        return query.where('public').equals(true);
+    }
+}
+export async function create(req, res) {
+    let auth = req.decoded;
+    if (!auth || auth.role === USER_ROLES.ADMIN) {
+        res.status(ERROR_STATUSES.FORBIDDEN);
+    } else {
+        try {
+            let group = new Group({
+                name: req.body.name,
+                creator: auth.name,
+                public: req.body.public
+            });
+            group = await group.save();
+            res.send(convertGroup(group));
+        } catch (err) {
+            handleError(err, res);
+        }
+    }
+};
+
+export async function findOne(req, res) {
+    let auth = req.decoded;
+    try {
+        let user = auth || auth.role === USER_ROLES.USER ? await User.findOne({ name: auth.name }).exec() : null;
+        let query = Group.findOne({ name: req.params.name });
+        query = filterGroupsWithUser(query, auth, user);
+        let group = await query.exec();
+        if (!group)
+            res.status(ERROR_STATUSES.NOT_FOUND).end();
+        else
+            res.send(convertGroup(group, auth));
+    } catch (err) {
+        handleError(err, res);
+    }
+};
+
+export async function findAll(req, res) {
+    let auth = req.decoded;
+    try {
+        let user = auth || auth.role === USER_ROLES.USER ? await User.findOne({ name: auth.name }).exec() : null;
+        let query = Group.find();
+        query = filterGroupsWithUser(query, auth, user);
+        let groups = await query.exec();
+        res.send(convertGroups(groups, auth));
+    } catch (err) {
+        handleError(err, res);
+    }
+};
+
+export async function findByUser(req, res) {
+    let auth = req.decoded;
+    try {
+        let groupUser = await User.findOne({ name: req.params.name }).exec();
+        if (!groupUser) {
+            res.status(ERROR_STATUSES.NOT_FOUND).end();
+        } else {
+            let user = auth || auth.role === USER_ROLES.USER ? await User.findOne({ name: auth.name }).exec() : null;
+            let query = Groups.find({ creator: groupUser.name });
+            query = filterGroupsWithUser(query, auth, user);
+            let groups = await query.exec();
+            res.send(convertGroups(groups, auth));
+        }
+    } catch (err) {
+        handleError(err, res);
+    }
+};
+
+export async function findUserMemberIn(req, res) {
+    let auth = req.decoded;
+    try {
+        let groupUser = await User.findOne({ name: req.params.name }).exec();
+        if (!groupUser) {
+            res.status(ERROR_STATUSES.NOT_FOUND).end();
+        } else {
+            let user = auth || auth.role === USER_ROLES.USER ? await User.findOne({ name: auth.name }).exec() : null;
+            let query = Group.find({ name: { '$in': groupUser.groups } });
+            query = filterGroupsWithUser(query, auth, user);
+            let groups = await query.exec();
+            res.send(convertGroups(groups, auth));
+        }
+    } catch (err) {
+        handleError(err, res);
+    }
 }
 
-export function removeMember(req, res) {
-    Group.findById(req.params.id, (err, group) => {
-        if (err) {
-            res.status(500).send(err.message);
+
+export async function update(req, res) {
+    let auth = req.decoded;
+    try {
+        let group = await Group.findOne({ name: req.params.name }).exec();
+        if (!group) {
+            res.status(ERROR_STATUSES.NOT_FOUND).end();
         } else {
-            let index = group.members.findIndex((element) => {
-                return element.userId = req.params.userId;
-            });
-            if (index === -1) {
-                res.status(404).end();
+            if (group.creator === auth.name) {
+                if (!isUndefined(req.body.name))
+                    group.name = req.body.name;
+                if (!isUndefined(req.body.public))
+                    group.public = req.body.public;
+                group = await group.save();
+                res.send(group);
             } else {
-                group.members[index].remove();
-                group.save((err) => {
-                    if (err)
-                        res.status(500).send(err.message);
-                    res.end();
-                });
+                res.status(ERROR_STATUSES.FORBIDDEN).end();
             }
         }
-    });
+    } catch (err) {
+        handleError(err, res);
+    }
 }
 
-export function updateMember(req, res) {
-    Group.findById(req.params.id, (err, group) => {
-        if (err)
-            res.status(500).send(err.message);
-        let index = group.members.findIndex((element) => {
-            return element.userId = req.params.userId;
-        });
-        if (index === -1) {
-            res.status(404).end();
+export async function remove(req, res) {
+    let auth = req.decoded;
+    try {
+        let group = await Group.findOne(req.params.name).exec();
+        if (!group) {
+            res.status(ERROR_STATUSES.NOT_FOUND).end();
         } else {
-            if (req.body.rights)
-                group.members[index].rights = req.body.rights;
-            group.save((err) => {
-                if (err)
-                    res.status(500).send(err.message);
+            if (!auth || auth.role === USER_ROLES.USER && auth.name !== group.creator) {
+                res.status(ERROR_STATUSES.FORBIDDEN).end();
+            } else {
+                await group.remove();
                 res.end();
-            });
+            }
         }
-    });
+    } catch (err) {
+        handleError(err, res);
+    }
 }

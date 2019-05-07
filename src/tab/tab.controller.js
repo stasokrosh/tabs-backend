@@ -137,6 +137,8 @@ export async function update(req, res) {
                     tab.name = req.body.name;
                 if (!isUndefined(req.body.public) && auth && auth.name === tab.creator)
                     tab.public = req.body.public;
+                if (!isUndefined(req.body.users) && auth && auth.name === tab.creator)
+                    tab.users = req.body.users;
                 tab = await tab.save();
                 res.send(tab);
             } else {
