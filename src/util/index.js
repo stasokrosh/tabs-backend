@@ -18,11 +18,11 @@ export const ERROR_STATUSES = {
 }
 
 export function getErrorStatus(error) {
-    return (error.code === 11000) ? ENTITY_EXISTS : ERROR_STATUSES.INTERNAL;
+    return (error.code === 11000) ? ERROR_STATUSES.ENTITY_EXISTS : ERROR_STATUSES.INTERNAL;
 }
 
 export function handleError(error, res) {
-    res.status(getErrorStatus(error)).end();
+    res.status(getErrorStatus(error)).send(error.message);
 }
 
 

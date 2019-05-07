@@ -1,18 +1,18 @@
 import mongoose from 'mongoose'
 
-export const TAB_USER_RIGHTS = {
+export const TAB_RIGHTS = {
     READ : 'read',
     WRITE : 'write'
 };
 
 let TabSchema = new mongoose.Schema({
-    name: { type: String, required: true, max: 20, unique: true },
+    name: { type: String, required: true, max: 20 },
     creator: { type: String, required: true },
-    group: String,
+    groupId: String,
     createDate: { type: Date, default: Date.now },
     users: [{
         name: String,
-        rights: [{type: String, enum : [TAB_USER_RIGHTS.READ, TAB_USER_RIGHTS.WRITE]}]
+        rights: {type: String, enum : [TAB_RIGHTS.READ, TAB_RIGHTS.WRITE]}
     }],
     public : Boolean
 });

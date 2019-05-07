@@ -7,6 +7,7 @@ TabRouter.post('/', TabController.create);
 TabRouter.get('/:id', TabController.findOne);
 TabRouter.get('/', TabController.findAll);
 TabRouter.get('/user/:name', TabController.findByUser);
+TabRouter.get('/favourite/:name', TabController.findUserFavourite);
 TabRouter.put('/:id', TabController.update);
 TabRouter.delete('/:id', TabController.remove);
 
