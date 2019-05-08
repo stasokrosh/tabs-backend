@@ -1,0 +1,44 @@
+import User from './user.model'
+import { isUndefined } from "util";
+
+export async function createUser(user) {
+    user = new User({
+        user
+    });
+    return await user.save()
+}
+
+export async function findUser(name) {
+    return await User.findOne({ name }).exec();
+}
+
+export async function findAllUsers() {
+    return await User.find().exec();
+}
+
+export async function findUsersByGroup(group) {
+    return await User.find({ groups: group }).exec();
+}
+
+export async function updateUser(name, data) {
+    let user = await findUser(name);
+    if (!user) {
+        return;
+    } else {
+        if (!isUndefined(data.name))
+            user.name = data.name;
+        if (!isUndefined(data.favouriteTabs))
+            user.favouriteTabs = data.favouriteTabs;
+        if (!isUndefined(data.groups))
+            user.groups = data.groups;
+        return await user.save();
+    }
+}
+
+export async function removeUser(name) {
+    let user = await findUser(name);
+    if (!user)
+        return;
+    else
+        return await user.remove();
+}

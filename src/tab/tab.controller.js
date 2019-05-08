@@ -1,42 +1,8 @@
-import Tab, { TAB_RIGHTS } from './tab.model'
-import { handleError, ERROR_STATUSES } from '../util/index'
-import User, { USER_ROLES } from '../user/user.model';
-import { isUndefined } from 'util';
 
-function convertTab(tab, auth) {
-    let res = {
-        id: tab._id,
-        name: tab.name,
-        creator: tab.creator,
-        public: tab.public,
-        group: tab.group
-    }
-    if (auth.name === tab.creator)
-        res.users = tab.users;
-    return res;
-}
-
-function convertTabs(tabs, auth) {
-    return tabs.map(tab => convertTab(tab, auth));
-}
-
-function filterTabsWithUser(query, auth, user) {
-    if (auth) {
-        if (auth.role === USER_ROLES.ADMIN) {
-            return query;
-        } else {
-            return query.or([
-                { public: true },
-                { group: { '$in': user.groups } },
-                { creator: user.name },
-                { _id: { '$in': user.favouriteTabs } },
-                { 'users.name': user.name }
-            ]);
-        }
-    } else {
-        return query.where('public').equals(true);
-    }
-}
+import { handleError, ERROR_STATUSES, getUserFromAuth, sendErrorResponse } from '../util/index'
+import { USER_ROLES } from '../user/user.model'
+import { convertTab, convertTabs } from './tab.converter'
+import { createTab, findTab, findAllTabs, findTabsByUser, findFavouriteTabs, updateTab, removeTab, findTabWriters, findTabCreator } from './tab.service';
 
 export async function create(req, res) {
     let auth = req.decoded;
@@ -44,14 +10,13 @@ export async function create(req, res) {
         res.status(ERROR_STATUSES.FORBIDDEN);
     } else {
         try {
-            let tab = new Tab({
+            let tab = await createTab({
                 name: req.body.name,
                 creator: auth.name,
                 users: req.body.users,
                 public: req.body.public,
                 group: req.body.group
             });
-            tab = await tab.save()
             res.send(convertTab(tab, auth));
         } catch (err) {
             handleError(err, res);
@@ -59,16 +24,13 @@ export async function create(req, res) {
     }
 };
 
-
 export async function findOne(req, res) {
     let auth = req.decoded;
     try {
-        let user = auth || auth.role === USER_ROLES.USER ? await User.findOne({ name: auth.name }).exec() : null;
-        let query = Tab.findById(req.params.id);
-        query = filterTabsWithUser(query, auth, user);
-        let tab = await query.exec();
+        let user = await getUserFromAuth(auth);
+        let tab = await findTab(req.params.id, user);
         if (!tab)
-            res.status(ERROR_STATUSES.NOT_FOUND).end();
+            sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
         else
             res.send(convertTab(tab, auth));
     } catch (err) {
@@ -79,10 +41,8 @@ export async function findOne(req, res) {
 export async function findAll(req, res) {
     let auth = req.decoded;
     try {
-        let user = auth || auth.role === USER_ROLES.USER ? await User.findOne({ name: auth.name }).exec() : null;
-        let query = Tab.find();
-        query = filterTabsWithUser(query, auth, user);
-        let tabs = await query.exec();
+        let user = await getUserFromAuth(auth);
+        let tabs = await findAllTabs(user);
         res.send(convertTabs(tabs, auth));
     } catch (err) {
         handleError(err, res);
@@ -92,16 +52,9 @@ export async function findAll(req, res) {
 export async function findByUser(req, res) {
     let auth = req.decoded;
     try {
-        let tabUser = await User.findOne({ name: req.params.name }).exec();
-        if (!tabUser) {
-            res.status(ERROR_STATUSES.NOT_FOUND).end();
-        } else {
-            let user = auth || auth.role === USER_ROLES.USER ? await User.findOne({ name: auth.name }).exec() : null;
-            let query = Tab.find({ creator: tabUser.name });
-            query = filterTabsWithUser(query, auth, user);
-            let tabs = await query.exec();
-            res.send(convertTabs(tabs, auth));
-        }
+        let user = await getUserFromAuth(auth);
+        let tabs = await findTabsByUser(req.params.name, user);
+        res.send(convertTabs(tabs, auth));
     } catch (err) {
         handleError(err, res);
     }
@@ -110,16 +63,12 @@ export async function findByUser(req, res) {
 export async function findUserFavourite(req, res) {
     let auth = req.decoded;
     try {
-        let tabUser = await User.findOne({ name: req.params.name }).exec();
-        if (!tabUser) {
-            res.status(ERROR_STATUSES.NOT_FOUND).end();
-        } else {
-            let user = auth || auth.role === USER_ROLES.USER ? await User.findOne({ name: auth.name }).exec() : null;
-            let query = Tab.find({ _id : {'$in' : tabUser.favouriteTabs } });
-            query = filterTabsWithUser(query, auth, user);
-            let tabs = await query.exec();
+        let user = await getUserFromAuth(auth);
+        let tabs = await findFavouriteTabs(req.params.name, user);
+        if (!tabs)
+            sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
+        else
             res.send(convertTabs(tabs, auth));
-        }
     } catch (err) {
         handleError(err, res);
     }
@@ -128,22 +77,14 @@ export async function findUserFavourite(req, res) {
 export async function update(req, res) {
     let auth = req.decoded;
     try {
-        let tab = await Tab.findById(req.params.id).exec();
-        if (!tab) {
-            res.status(ERROR_STATUSES.NOT_FOUND).end();
+        let writers = await findTabWriters(req.params.name)
+        if (!writers) {
+            sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
+        } else if (writers.indexOf(auth.name) !== -1) {
+            let tab = await updateTab(req.params.name, req.body, auth);
+            res.send(tab);
         } else {
-            if (tab.creator === auth.name || tab.users.find(user => user.name === auth.name && user.rights === TAB_RIGHTS.WRITE)) {
-                if (!isUndefined(req.body.name))
-                    tab.name = req.body.name;
-                if (!isUndefined(req.body.public) && auth && auth.name === tab.creator)
-                    tab.public = req.body.public;
-                if (!isUndefined(req.body.users) && auth && auth.name === tab.creator)
-                    tab.users = req.body.users;
-                tab = await tab.save();
-                res.send(tab);
-            } else {
-                res.status(ERROR_STATUSES.FORBIDDEN).end();
-            }
+            sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
         }
     } catch (err) {
         handleError(err, res);
@@ -153,16 +94,18 @@ export async function update(req, res) {
 export async function remove(req, res) {
     let auth = req.decoded;
     try {
-        let tab = await Tab.findById(req.params.id).exec();
-        if (!tab) {
-            res.status(ERROR_STATUSES.NOT_FOUND).end();
+        let creator = await findTabCreator(req.params.name);
+        if (!creator) {
+            sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
+        } else if (!auth || auth.role === USER_ROLES.USER && auth.name !== creator) {
+            sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
         } else {
-            if (!auth || auth.role === USER_ROLES.USER && auth.name !== tab.creator) {
-                res.status(ERROR_STATUSES.FORBIDDEN).end();
-            } else {
-                await tab.remove();
+            let tab = await removeTab(req.params.name);
+            if (!tab)
+                res.status(ERROR_STATUSES.NOT_FOUND);
+            else
                 res.end();
-            }
+            res.end();
         }
     } catch (err) {
         handleError(err, res);

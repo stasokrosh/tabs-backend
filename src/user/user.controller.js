@@ -1,38 +1,32 @@
-import User, { USER_ROLES } from './user.model'
-import { getHash, handleError, ERROR_STATUSES } from '../util'
-import { isUndefined } from 'util';
-import Group from '../group/group.model';
-
-function convertUser(user, auth) {
-    let res = {};
-    return res;
-}
-
-function convertUsers(users, auth) {
-    return users.map(user => convertUsers(user, auth));
-}
+import { USER_ROLES } from './user.model'
+import { getHash, handleError, ERROR_STATUSES, sendErrorResponse } from '../util'
+import { createUser, findUser, findAllUsers, findUsersByGroup, removeUser } from './user.service';
+import { convertUser, convertUsers } from './user.converter'
 
 export async function create(req, res) {
     let auth = req.decoded;
-    try {
-        let user = new User({
-            name: req.body.name,
-            passwordHash: getHash(req.body.password),
-            role: req.body.role
-        });
-        user = await user.save()
-        res.send(convertUser(user, auth));
-    } catch (err) {
-        handleError(err, res);
+    if (auth.role === USER_ROLES.ADMIN) {
+        try {
+            user = await createUser({
+                name: req.body.name,
+                passwordHash: getHash(req.body.password),
+                role: req.body.role
+            })
+            res.send(convertUser(user, auth));
+        } catch (err) {
+            handleError(err, res);
+        }
+    } else {
+        sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
     }
 };
 
 export async function findOne(req, res) {
     let auth = req.decoded;
     try {
-        let user = await User.findOne({ name: req.params.name }).exec();
+        let user = await findUser(req.params.name);
         if (!user)
-            res.status(ERROR_STATUSES.NOT_FOUND).end();
+            sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
         else
             res.send(convertUser(user, auth));
     } catch (err) {
@@ -43,7 +37,7 @@ export async function findOne(req, res) {
 export async function findAll(req, res) {
     let auth = req.decoded;
     try {
-        let users = await User.find().exec();
+        let users = await findAllUsers();
         res.send(convertUsers(users, auth));
     } catch (err) {
         handleError(err, res);
@@ -53,13 +47,8 @@ export async function findAll(req, res) {
 export async function findByGroup(req, res) {
     let auth = req.decoded;
     try {
-        let group = await Group.findOne({name : req.params.name});
-        if (!group) {
-            res.status(ERROR_STATUSES.NOT_FOUND);
-        } else {
-            let users = await User.find({groups : group.name}).exec();
-            res.send(convertUsers(users, auth));
-        }
+        let users = await findUsersByGroup(req.params.name);
+        res.send(convertUsers(users, auth));
     } catch (err) {
         handleError(err, res);
     }
@@ -68,20 +57,14 @@ export async function findByGroup(req, res) {
 export async function update(req, res) {
     let auth = req.decoded;
     try {
-        let user = await User.findOne({ name: req.params.name });
-        if (!user) {
-            res.status(ERROR_STATUSES.NOT_FOUND).end();
+        if (auth && auth.name === req.params.name) {
+            user = await updateUser(req.params.name, req.body);
+            if (user)
+                res.send(convertUser(user, auth));
+            else
+                sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
         } else {
-            if (auth && auth.name !== req.params.name) {
-                if (!isUndefined(req.body.name))
-                    user.name = req.body.name;
-                if (!isUndefined(req.body.favouriteTabs))
-                    user.favouriteTabs = req.body.favouriteTabs;
-                user = await user.save();
-                res.send(convertUser(user,auth));
-            } else {
-                res.status(ERROR_STATUSES.FORBIDDEN).end();
-            }
+            sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
         }
     } catch (err) {
         handleError(err, res);
@@ -91,16 +74,14 @@ export async function update(req, res) {
 export async function remove(req, res) {
     let auth = req.decoded;
     try {
-        let user = await User.findOne({ name: req.params.name });
-        if (!user) {
-            res.status(ERROR_STATUSES.NOT_FOUND).end();
-        } else {
-            if (auth && auth.name !== req.params.name || auth && auth.role === USER_ROLES.ADMIN) {
-                await user.remove();
+        if (auth && (auth.name === req.params.name || auth.role === USER_ROLES.ADMIN)) {
+            let user = await removeUser();
+            if (user)
                 res.end();
-            } else {
-                res.status(ERROR_STATUSES.FORBIDDEN).end();
-            }
+            else
+                sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
+        } else {
+            sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
         }
     } catch (err) {
         handleError(err, res);

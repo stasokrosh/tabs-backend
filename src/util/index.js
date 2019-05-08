@@ -1,3 +1,4 @@
+import { findUser } from "../user/user.service";
 
 export function getHash(string) {
     var hash = 0, i, chr;
@@ -11,6 +12,7 @@ export function getHash(string) {
 };
 
 export const ERROR_STATUSES = {
+    BAD_REQUEST : 400,
     FORBIDDEN : 403,
     NOT_FOUND : 404,
     ENTITY_EXISTS : 422,
@@ -24,5 +26,14 @@ export function getErrorStatus(error) {
 export function handleError(error, res) {
     res.status(getErrorStatus(error)).send(error.message);
 }
+
+export function sendErrorResponse(code, res) {
+    res.status(code).end();
+} 
+
+export async function getUserFromAuth(auth) {
+    return auth && auth.role === USER_ROLES.USER ? await findUser(auth.name) : null;
+}
+
 
 
