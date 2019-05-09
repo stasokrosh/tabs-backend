@@ -1,4 +1,5 @@
 import { findUser } from "../user/user.service";
+import { USER_ROLES } from "../user/user.model";
 
 export function getHash(string) {
     var hash = 0, i, chr;
@@ -13,6 +14,7 @@ export function getHash(string) {
 
 export const ERROR_STATUSES = {
     BAD_REQUEST : 400,
+    AUTH_FAILED : 401,
     FORBIDDEN : 403,
     NOT_FOUND : 404,
     ENTITY_EXISTS : 422,

@@ -1,4 +1,4 @@
-import User from './user.model'
+import User, { USER_ROLES } from './user.model'
 import { isUndefined } from "util";
 
 export async function createUser(user) {
@@ -13,11 +13,11 @@ export async function findUser(name) {
 }
 
 export async function findAllUsers() {
-    return await User.find().exec();
+    return await User.find({ role : USER_ROLES.USER }).exec();
 }
 
 export async function findUsersByGroup(group) {
-    return await User.find({ groups: group }).exec();
+    return await User.find({ groups: group, role : USER_ROLES.USER }).exec();
 }
 
 export async function updateUser(name, data) {

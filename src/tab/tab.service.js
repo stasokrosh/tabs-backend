@@ -1,6 +1,7 @@
 import Tab, { TAB_RIGHTS } from "./tab.model";
 import { findUser } from "../user/user.service";
 import { isUndefined } from "util";
+import { USER_ROLES } from "../user/user.model";
 
 function filterTabsWithUser(query, user) {
     if (user) {
@@ -70,7 +71,7 @@ export async function removeTab(name) {
     if (!tab)
         return;
     return await tab.remove();
-}s
+}
 
 export async function findTabWriters(name) {
     let tab = await findTab(name);

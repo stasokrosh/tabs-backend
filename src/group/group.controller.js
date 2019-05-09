@@ -43,6 +43,7 @@ export async function findAll(req, res) {
         let groups = await findAllGroups(user);
         res.send(convertGroups(groups, auth));
     } catch (err) {
+        console.log(err);
         handleError(err, res);
     }
 };

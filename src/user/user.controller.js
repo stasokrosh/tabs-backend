@@ -1,6 +1,6 @@
 import { USER_ROLES } from './user.model'
 import { getHash, handleError, ERROR_STATUSES, sendErrorResponse } from '../util'
-import { createUser, findUser, findAllUsers, findUsersByGroup, removeUser } from './user.service';
+import { createUser, findUser, findAllUsers, findUsersByGroup, updateUser, removeUser } from './user.service';
 import { convertUser, convertUsers } from './user.converter'
 
 export async function create(req, res) {
@@ -38,6 +38,7 @@ export async function findAll(req, res) {
     let auth = req.decoded;
     try {
         let users = await findAllUsers();
+        console.log(users);
         res.send(convertUsers(users, auth));
     } catch (err) {
         handleError(err, res);
@@ -58,7 +59,7 @@ export async function update(req, res) {
     let auth = req.decoded;
     try {
         if (auth && auth.name === req.params.name) {
-            user = await updateUser(req.params.name, req.body);
+            let user = await updateUser(req.params.name, req.body);
             if (user)
                 res.send(convertUser(user, auth));
             else

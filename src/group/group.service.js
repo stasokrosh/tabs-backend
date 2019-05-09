@@ -1,5 +1,6 @@
 import Group from "./group.model";
 import { isUndefined } from "util";
+import { USER_ROLES } from "../user/user.model";
 
 function filterGroupsWithUser(query, user) {
     if (user) {

@@ -1,16 +1,15 @@
 import jwt from 'jsonwebtoken'
+import { sendErrorResponse, ERROR_STATUSES } from '.';
 
-export function parseJWT(req, res, next) {
+export async function parseJWT(req, res, next) {
     let token = req.headers['authorization'];
     if (token) {
-        jwt.verify(token, process.env.JWT_SECRET, function (err, decoded) {
-            if (err) {
-                res.status(400).end();
-            } else {
-                req.decoded = decoded; 
-                next();
-            }
-        });
+        try {
+            req.decoded = await jwt.verify(token, process.env.JWT_SECRET);
+            next();
+        } catch (err) {
+            sendErrorResponse(ERROR_STATUSES.AUTH_FAILED, res);
+        }
     } else {
         next();
     }

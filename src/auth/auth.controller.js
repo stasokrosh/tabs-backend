@@ -24,7 +24,7 @@ export async function signin(req, res) {
         if (!user) {
             sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
         } else if (getHash(req.body.password) !== user.passwordHash) {
-            sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
+            sendErrorResponse(ERROR_STATUSES.AUTH_FAILED, res);
         } else {
             let token = getJwtToken(user);
             res.send({ token: token });
@@ -54,7 +54,7 @@ export async function getAuthInfo(req, res) {
         sendErrorResponse(ERROR_STATUSES.BAD_REQUEST, res);
     } else {
         try {
-            let user = findUser(auth.name);
+            let user = await findUser(auth.name);
             res.send(convertUser(user));
         } catch(err) {
             handleError(err);
