@@ -2,7 +2,7 @@
 import { handleError, ERROR_STATUSES, getUserFromAuth, sendErrorResponse } from '../util/index'
 import { USER_ROLES } from '../user/user.model'
 import { convertTab, convertTabs } from './tab.converter'
-import { createTab, findTab, findAllTabs, findTabsByUser, findFavouriteTabs, updateTab, removeTab, findTabWriters, findTabCreator } from './tab.service';
+import { createTab, findTab, findAllTabs, findTabsByUser, findFavouriteTabs, updateTab, removeTab, findTabWriters, findTabCreator, findTabsByGroup } from './tab.service';
 
 export async function create(req, res) {
     let auth = req.decoded;
@@ -73,6 +73,17 @@ export async function findUserFavourite(req, res) {
         handleError(err, res);
     }
 }
+
+export async function findByGroup(req, res) {
+    let auth = req.decoded;
+    try {
+        let user = await getUserFromAuth(auth);
+        let tabs = await findTabsByGroup(req.params.name, user);
+        res.send(convertTabs(tabs, auth));
+    } catch (err) {
+        handleError(err, res);
+    }
+};
 
 export async function update(req, res) {
     let auth = req.decoded;

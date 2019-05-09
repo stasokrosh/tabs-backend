@@ -2,7 +2,7 @@
 import { handleError, getUserFromAuth, sendErrorResponse } from '../util'
 import { USER_ROLES } from '../user/user.model'
 import { convertGroup, convertGroups } from './group.converter'
-import { createGroup, findAllGroups, findGroupsByUser, findGroupsByUserMember, updateGroup, findGroupCreator, removeGroup } from './group.service';
+import { createGroup, findAllGroups, findGroupsByUser, findGroupsByUserMember, updateGroup, findGroupCreator, removeGroup, findGroup } from './group.service';
 
 export async function create(req, res) {
     let auth = req.decoded;
@@ -56,6 +56,7 @@ export async function findByUser(req, res) {
         res.send(convertGroups(groups, auth));
     } catch (err) {
         handleError(err, res);
+        console.log(err);
     }
 };
 
@@ -69,7 +70,6 @@ export async function findUserMemberIn(req, res) {
         handleError(err, res);
     }
 }
-
 
 export async function update(req, res) {
     let auth = req.decoded;

@@ -53,6 +53,12 @@ export async function findFavouriteTabs(name, user) {
     return await query.exec();
 }
 
+export async function findTabsByGroup(name, user) {
+    let query = Tab.find({ group: name });
+    query = filterTabsWithUser(query, user);
+    return await query.exec();
+}
+
 export async function updateTab(name, data, user) {
     let tab = findTab(name);
     if (!tab)

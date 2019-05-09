@@ -38,7 +38,6 @@ export async function findAll(req, res) {
     let auth = req.decoded;
     try {
         let users = await findAllUsers();
-        console.log(users);
         res.send(convertUsers(users, auth));
     } catch (err) {
         handleError(err, res);

@@ -24,7 +24,7 @@ export async function createGroup(group) {
 }
 
 export async function findGroup(name, user) {
-    let query = Group.findOne({ name });
+    let query = Group.findOne({ name : name });
     query = filterGroupsWithUser(query, user);
     return await query.exec();
 }
@@ -36,7 +36,7 @@ export async function findAllGroups(user) {
 }
 
 export async function findGroupsByUser(name, user) {
-    let query = Groups.find({ creator: name });
+    let query = Group.find({ creator: name });
     query = filterGroupsWithUser(query, user);
     return await query.exec();
 }

@@ -8,6 +8,7 @@ TabRouter.get('/:id', TabController.findOne);
 TabRouter.get('/', TabController.findAll);
 TabRouter.get('/user/:name', TabController.findByUser);
 TabRouter.get('/favourite/:name', TabController.findUserFavourite);
+TabRouter.get('/group/:name', TabController.findByGroup);
 TabRouter.put('/:id', TabController.update);
 TabRouter.delete('/:id', TabController.remove);
 
