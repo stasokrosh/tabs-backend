@@ -88,7 +88,7 @@ export async function findByGroup(req, res) {
 export async function update(req, res) {
     let auth = req.decoded;
     try {
-        let writers = await findTabWriters(req.params.name)
+        let writers = await findTabWriters(req.params.id)
         if (!writers) {
             sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
         } else if (writers.indexOf(auth.name) !== -1) {
@@ -105,13 +105,13 @@ export async function update(req, res) {
 export async function remove(req, res) {
     let auth = req.decoded;
     try {
-        let creator = await findTabCreator(req.params.name);
+        let creator = await findTabCreator(req.params.id);
         if (!creator) {
             sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
         } else if (!auth || auth.role === USER_ROLES.USER && auth.name !== creator) {
             sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
         } else {
-            let tab = await removeTab(req.params.name);
+            let tab = await removeTab(req.params.id);
             if (!tab)
                 res.status(ERROR_STATUSES.NOT_FOUND);
             else
@@ -119,6 +119,7 @@ export async function remove(req, res) {
             res.end();
         }
     } catch (err) {
+        console.log(err);
         handleError(err, res);
     }
 }

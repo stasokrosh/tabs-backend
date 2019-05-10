@@ -94,13 +94,14 @@ export async function remove(req, res) {
         let creator = await findGroupCreator(req.params.name);
         if (!creator) {
             sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
-        } else if (!auth || auth.role === USER_ROLES.USER && auth.name !== group.creator) {
+        } else if (!auth || auth.role === USER_ROLES.USER && auth.name !== creator) {
             sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
         } else {
             await removeGroup(req.params.name);
             res.end();
         }
     } catch (err) {
+        console.log(err);
         handleError(err, res);
     }
 }

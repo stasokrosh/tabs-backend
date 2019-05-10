@@ -59,8 +59,8 @@ export async function findTabsByGroup(name, user) {
     return await query.exec();
 }
 
-export async function updateTab(name, data, user) {
-    let tab = findTab(name);
+export async function updateTab(id, data, user) {
+    let tab = findTab(id);
     if (!tab)
         return;
     if (!isUndefined(data.name))
@@ -72,15 +72,12 @@ export async function updateTab(name, data, user) {
     return await tab.save();
 }
 
-export async function removeTab(name) {
-    let tab = findTab(name);    
-    if (!tab)
-        return;
-    return await tab.remove();
+export async function removeTab(id) {
+    return await Tab.findByIdAndDelete(id).exec();
 }
 
-export async function findTabWriters(name) {
-    let tab = await findTab(name);
+export async function findTabWriters(id) {
+    let tab = await findTab(id);
     if (!tab)
         return;
     let writers = tab.users.filter(user => user.rights === TAB_RIGHTS.WRITE).map(user => user.name);
@@ -88,8 +85,8 @@ export async function findTabWriters(name) {
     return writers;
 }
 
-export async function findTabCreator(name) {
-    let tab = await findTab(name);
+export async function findTabCreator(id) {
+    let tab = await findTab(id);
     if (!tab)
         return;
     return tab.creator;

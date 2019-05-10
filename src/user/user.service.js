@@ -36,9 +36,5 @@ export async function updateUser(name, data) {
 }
 
 export async function removeUser(name) {
-    let user = await findUser(name);
-    if (!user)
-        return;
-    else
-        return await user.remove();
+    return await User.findOneAndDelete({name}).exec();
 }

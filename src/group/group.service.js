@@ -59,10 +59,7 @@ export async function updateGroup(name, data) {
 }
 
 export async function removeGroup(name) {
-    let group = await findGroup(name);
-    if (!group)
-        return;
-    return await group.remove();
+    return await Group.findOneAndDelete({name}).exec();
 }
 
 export async function findGroupCreator(name) {
