@@ -29,8 +29,8 @@ export async function updateUser(name, data) {
             user.favouriteTabs = data.favouriteTabs;
         if (!isUndefined(data.groups))
             user.groups = data.groups;
-        if (!isUndefined(data.imageVersion))
-            user.imageVersion = data.imageVersion;
+        if (!isUndefined(data.image))
+            user.image = data.image;
         return await user.save();
     }
 }

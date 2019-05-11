@@ -3,7 +3,8 @@ export function convertUser(user, auth) {
     let res = {
         name : user.name,
         favouriteTabs : user.favouriteTabs,
-        groups : user.groups
+        groups : user.groups,
+        image: user.image
     };
     return res;
 }

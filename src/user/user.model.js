@@ -12,7 +12,8 @@ let UserSchema = new mongoose.Schema({
     passwordHash: { type: Number, required: true },
     role: { type: String, enum: [USER_ROLES.USER, USER_ROLES.ADMIN], required: true },
     favouriteTabs: [ObjectId],
-    groups: [String]
+    groups: [String],
+    image: String
 });
 
 const User = mongoose.model('User', UserSchema);
