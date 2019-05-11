@@ -2,9 +2,7 @@ import User, { USER_ROLES } from './user.model'
 import { isUndefined } from "util";
 
 export async function createUser(user) {
-    user = new User({
-        user
-    });
+    user = new User(user);
     return await user.save()
 }
 
@@ -31,6 +29,8 @@ export async function updateUser(name, data) {
             user.favouriteTabs = data.favouriteTabs;
         if (!isUndefined(data.groups))
             user.groups = data.groups;
+        if (!isUndefined(data.imageVersion))
+            user.imageVersion = data.imageVersion;
         return await user.save();
     }
 }
