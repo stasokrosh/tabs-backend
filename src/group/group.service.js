@@ -55,6 +55,8 @@ export async function updateGroup(name, data) {
         group.name = data.name;
     if (!isUndefined(data.public))
         group.public = data.public;
+    if (!isUndefined(data.image))
+        group.image = data.image;
     return await group.save();
 }
 

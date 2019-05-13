@@ -3,7 +3,8 @@ export function convertGroup(group, auth) {
     let res = {
         name: group.name,
         creator: group.creator,
-        public: group.public
+        public: group.public,
+        image: group.image
     }
     return res;
 }
