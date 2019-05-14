@@ -8,7 +8,7 @@ export const USER_ROLES = {
 }
 
 let UserSchema = new mongoose.Schema({
-    name: { type: String, required: true, max: 20, unique: true },
+    name: { type: String, required: true, unique: true },
     passwordHash: { type: Number, required: true },
     role: { type: String, enum: [USER_ROLES.USER, USER_ROLES.ADMIN], required: true },
     favouriteTabs: [ObjectId],
