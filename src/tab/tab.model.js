@@ -9,7 +9,7 @@ export const TAB_RIGHTS = {
 
 let TabSchema = new mongoose.Schema({
     creator: { type: String, required: true },
-    groupId: String,
+    group: String,
     createDate: { type: Date, default: Date.now },
     users: [{
         name: String,

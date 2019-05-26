@@ -1,6 +1,7 @@
 import Group from "./group.model";
 import { isUndefined } from "util";
 import { USER_ROLES } from "../user/user.model";
+import { findUser } from "../user/user.service";
 
 function filterGroupsWithUser(query, user) {
     if (user) {
@@ -42,6 +43,9 @@ export async function findGroupsByUser(name, user) {
 }
 
 export async function findGroupsByUserMember(name, user) {
+    let groupUser = await findUser(name);
+    if (!groupUser)
+        return;
     let query = Group.find({ name: { '$in': groupUser.groups } });
     query = filterGroupsWithUser(query, user);
     return await query.exec();
@@ -64,8 +68,8 @@ export async function removeGroup(name) {
     return await Group.findOneAndDelete({name}).exec();
 }
 
-export async function findGroupCreator(name) {
-    let group = await findGroup(name);
+export async function findGroupCreator(name, user) {
+    let group = await findGroup(name, user);
     if (!group)
         return;
     return group.creator;

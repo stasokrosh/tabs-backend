@@ -8,7 +8,7 @@ import UserRouter from './user'
 import GroupRouter from './group'
 import TabRouter from './tab'
 import AuthRouter from './auth'
-import TabEditWebSocket from './tab-edit';
+import TabEditRouter, { TabEditWebSocket } from './tab-edit';
 // import https from 'https'
 // import fs from 'fs'
 
@@ -31,8 +31,9 @@ app.use('/user', UserRouter);
 app.use('/group', GroupRouter);
 app.use('/tab', TabRouter);
 app.use('/auth', AuthRouter);
+app.use('/edit/', TabEditRouter);
 
-app.ws('/edit.tab', TabEditWebSocket);
+//app.ws('/edit.tab', TabEditWebSocket);
 
 let port = 1234;
 // https.createServer({ key: fs.readFileSync('server.key'), cert: fs.readFileSync('server.cert')}, app)

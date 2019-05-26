@@ -3,19 +3,20 @@ import { getHash, handleError, ERROR_STATUSES, sendErrorResponse } from '../util
 import User, { USER_ROLES } from '../user/user.model'
 import { createUser, findUser } from '../user/user.service';
 
-const DEFAULT_EXPIRE_TIME = 1440;
+const DEFAULT_EXPIRE_TIME = 14400;
 
 function convertUser(user) {
     return {
         name : user.name,
         role : user.role,
         favouriteTabs : user.favouriteTabs,
-        groups : user.groups
+        groups : user.groups,
+        image: user.image
     }
 }
 
 function getJwtToken(user) {
-    return jwt.sign({ name: user.name, role: user.role }, process.env.JWT_SECRET, { expiresIn: DEFAULT_EXPIRE_TIME });
+    return jwt.sign({ name: user.name, role: user.role, image: user.image }, process.env.JWT_SECRET, { expiresIn: DEFAULT_EXPIRE_TIME });
 }
 
 export async function signin(req, res) {

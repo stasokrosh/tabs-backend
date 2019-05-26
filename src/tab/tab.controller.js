@@ -92,7 +92,7 @@ export async function update(req, res) {
         if (!writers) {
             sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
         } else if (writers.indexOf(auth.name) !== -1) {
-            let tab = await updateTab(req.params.name, req.body, auth);
+            let tab = await updateTab(req.params.id, req.body, auth);
             res.send(tab);
         } else {
             sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
@@ -119,7 +119,6 @@ export async function remove(req, res) {
             res.end();
         }
     } catch (err) {
-        console.log(err);
         handleError(err, res);
     }
 }

@@ -2,6 +2,8 @@ import Tab, { TAB_RIGHTS } from "./tab.model";
 import { findUser } from "../user/user.service";
 import { isUndefined } from "util";
 import { USER_ROLES } from "../user/user.model";
+import { Composition } from "../tab-edit/tab.edit.model";
+import { createComposition, updateComposition, deleteComposition } from "../tab-edit/tab.edit.service";
 
 function filterTabsWithUser(query, user) {
     if (user) {
@@ -22,25 +24,32 @@ function filterTabsWithUser(query, user) {
 }
 
 export async function createTab(tab) {
+    let composition = await createComposition({name : tab.name});
+    tab.composition = composition._id;
     tab = new Tab(tab);
-    return await tab.save();
+    tab.save();
+    tab.composition = composition;
+    return tab;
 }
 
 export async function findTab(id, user) {
     let query = Tab.findById(id);
     query = filterTabsWithUser(query, user);
+    query.populate('composition','name');
     return await query.exec();
 }
 
 export async function findAllTabs(user) {
     let query = Tab.find();
     query = filterTabsWithUser(query, user);
+    query.populate('composition','name');
     return await query.exec();
 }
 
 export async function findTabsByUser(name, user) {
     let query = Tab.find({ creator: name });
     query = filterTabsWithUser(query, user);
+    query.populate('composition','name');
     return await query.exec();
 }
 
@@ -50,12 +59,14 @@ export async function findFavouriteTabs(name, user) {
         return;
     let query = Tab.find({ _id: { '$in': tabUser.favouriteTabs } });
     query = filterTabsWithUser(query, user);
+    query.populate('composition','name');
     return await query.exec();
 }
 
 export async function findTabsByGroup(name, user) {
     let query = Tab.find({ group: name });
     query = filterTabsWithUser(query, user);
+    query.populate('composition','name');
     return await query.exec();
 }
 
@@ -63,17 +74,19 @@ export async function updateTab(id, data, user) {
     let tab = findTab(id);
     if (!tab)
         return;
-    if (!isUndefined(data.name))
-        tab.name = data.name;
     if (!isUndefined(data.public) && user.name === tab.creator)
         tab.public = data.public;
     if (!isUndefined(data.users) && user.name === tab.creator)
         tab.users = data.users;
-    return await tab.save();
+    if (!isUndefined(data.name))
+        updateComposition(tab.composition, data);
+    await tab.save();
 }
 
 export async function removeTab(id) {
-    return await Tab.findByIdAndDelete(id).exec();
+    let tab = await Tab.findByIdAndDelete(id).exec();
+    await deleteComposition(tab.composition);
+    return tab;
 }
 
 export async function findTabWriters(id) {

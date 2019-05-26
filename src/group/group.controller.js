@@ -1,5 +1,5 @@
 
-import { handleError, getUserFromAuth, sendErrorResponse } from '../util'
+import { handleError, getUserFromAuth, sendErrorResponse, ERROR_STATUSES } from '../util'
 import { USER_ROLES } from '../user/user.model'
 import { convertGroup, convertGroups } from './group.converter'
 import { createGroup, findAllGroups, findGroupsByUser, findGroupsByUserMember, updateGroup, findGroupCreator, removeGroup, findGroup } from './group.service';
@@ -10,7 +10,7 @@ export async function create(req, res) {
         res.status(ERROR_STATUSES.FORBIDDEN);
     } else {
         try {
-            group = await createGroup({
+            let group = await createGroup({
                 name: req.body.name,
                 creator: auth.name,
                 public: req.body.public
@@ -43,7 +43,6 @@ export async function findAll(req, res) {
         let groups = await findAllGroups(user);
         res.send(convertGroups(groups, auth));
     } catch (err) {
-        console.log(err);
         handleError(err, res);
     }
 };
@@ -56,7 +55,6 @@ export async function findByUser(req, res) {
         res.send(convertGroups(groups, auth));
     } catch (err) {
         handleError(err, res);
-        console.log(err);
     }
 };
 
@@ -77,8 +75,8 @@ export async function update(req, res) {
         let creator = await findGroupCreator(req.params.name);
         if (!creator) {
             sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
-        } else if (group.creator === auth.name) {
-            let group = await updateGroup(req.params.name, req.params.body);
+        } else if (creator === auth.name) {
+            let group = await updateGroup(req.params.name, req.body);
             res.send(group);
         } else {
             sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
@@ -91,7 +89,8 @@ export async function update(req, res) {
 export async function remove(req, res) {
     let auth = req.decoded;
     try {
-        let creator = await findGroupCreator(req.params.name);
+        let user = await getUserFromAuth(auth);
+        let creator = await findGroupCreator(req.params.name, user);
         if (!creator) {
             sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
         } else if (!auth || auth.role === USER_ROLES.USER && auth.name !== creator) {
@@ -101,7 +100,6 @@ export async function remove(req, res) {
             res.end();
         }
     } catch (err) {
-        console.log(err);
         handleError(err, res);
     }
 }

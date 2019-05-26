@@ -1,5 +1,16 @@
-export default function TabEditWebSocket(ws, req) {
-    ws.on('message', function (msg) {
-        TabEditWebSocket(JSON.parse(msg));
-    })
+import express from 'express'
+import tabEditDispatch from './tab.edit.dispatcher';
+import { load } from './tab.edit.controller';
+
+const TabEditRouter = express.Router();
+
+TabEditRouter.post('/:id', tabEditDispatch);
+TabEditRouter.get('/:id', load);
+
+export default TabEditRouter;
+
+export function TabEditWebSocket(ws, req) {
+    
 }
+
+

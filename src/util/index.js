@@ -26,6 +26,7 @@ export function getErrorStatus(error) {
 }
 
 export function handleError(error, res) {
+    console.log(error);
     res.status(getErrorStatus(error)).send(error.message);
 }
 

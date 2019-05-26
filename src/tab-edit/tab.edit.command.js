@@ -1,8 +1,7 @@
 
 export const TAB_EDIT_COMMANDS = {
     COMPOSITION: {
-        UPDATE: "UPDATE_COMPOSITION",
-        LOAD: "LOAD_COMPOSITION"
+        UPDATE: "UPDATE_COMPOSITION"
     },
     TRACK: {
         ADD: "ADD_TRACK",

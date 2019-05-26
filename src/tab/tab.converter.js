@@ -2,7 +2,7 @@
 export function convertTab(tab, auth) {
     let res = {
         id: tab._id,
-        name: tab.name,
+        name: tab.composition.name,
         creator: tab.creator,
         public: tab.public,
         group: tab.group

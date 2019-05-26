@@ -1,26 +1,33 @@
 import { TAB_EDIT_COMMANDS } from './tab.edit.command';
 import * as TabEditController from './tab.edit.controller'
+import { handleError, getUserFromuser, sendErrorResponse, getUserFromAuth } from '../util';
 
-export default function tabEditDispatcher(message) {
+export default async function tabEditDispatch(res, req) {
+    try {
+        let user = getUserFromAuth(req.decoded);
+        res.send(tabEditDispatchMessage(req.body, req.params.id, user));
+    } catch (err) {
+        handleError(err);
+    }
+}
+
+function tabEditDispatchMessage(message, id, user) {
     switch (message.command) {
         case TAB_EDIT_COMMANDS.COMPOSITION.UPDATE:
-            TabEditController.UpdateCompositionCommand(message);
-        case TAB_EDIT_COMMANDS.COMPOSITION.LOAD:
-            TabEditController.LoadCompositionCommand(message);
+            return TabEditController.updateCompositionCommand(message, id, user);
         case TAB_EDIT_COMMANDS.TRACK.ADD:
-            TabEditController.AddTrackCommand(message);
+            return TabEditController.addTrackCommand(message, id, user);
         case TAB_EDIT_COMMANDS.TRACK.UPDATE:
-            TabEditController.UpdateTrackCommand(message);
+            return TabEditController.updateTrackCommand(message, id, user);
         case TAB_EDIT_COMMANDS.TRACK.DELETE:
-            TabEditController.DeleteTrackCommand(message);
+            return TabEditController.deleteTrackCommand(message, id, user);
         case TAB_EDIT_COMMANDS.TACT.ADD:
-            TabEditController.AddTactCommand(message);
+            return TabEditController.addTactCommand(message, id, user);
         case TAB_EDIT_COMMANDS.TACT.UPDATE:
-            TabEditController.UpdateTactCommand(message);
+            return TabEditController.updateTactCommand(message, id, user);
         case TAB_EDIT_COMMANDS.TACT.DELETE:
-            TabEditController.DeleteTactCommand(message);
+            return TabEditController.deleteTactCommand(message, id, user);
         case TAB_EDIT_COMMANDS.NOTE.UPDATE:
-            TabEditController.UpdateNoteCommand(message);
-
+            return TabEditController.updateNoteCommand(message, id, user);
     }
 }
