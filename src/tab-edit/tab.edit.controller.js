@@ -1,53 +1,43 @@
-import { findComposition } from "./tab.edit.service";
+import { getCompositionWithContent, addTrack, updateTrack, deleteTrack } from "./tab.edit.service";
 import { getUserFromAuth, handleError, ERROR_STATUSES, sendErrorResponse } from "../util";
-import { convertComposition } from "./tab.edit.conveter";
-import { updateTab } from "../tab/tab.service";
+import { convertComposition, convertTrack } from "./tab.edit.conveter";
 
 export async function load(req, res) {
     let auth = req.decoded;
     try {
         let user = await getUserFromAuth(auth);
-        let composition = await findComposition(req.params.id, user);
+        let composition = await getCompositionWithContent(req.params.id);
         if (!composition)
             sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
         else
             res.send(convertComposition(composition));
     } catch (err) {
-        console.log(err);
         handleError(err, res);
     }
 }
 
-export async function updateCompositionCommand(message, id, user) {
-    if (!user)
-        sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
-    return await updateTab(id, message.data);
+export async function addTrackCommand(message, id, user) {
+    let track = await addTrack(id, message.data);
+    return convertTrack(track);
 }
 
-export function addTrackCommand(message) {
-
+export async function updateTrackCommand(message, id, user) {
+    let track = await updateTrack(id, message.data);
+    return convertTrack(track);
 }
 
-export function updateTrackCommand(message) {
-
+export async function deleteTrackCommand(message, id, user) {
+    await deleteTrack(id, message.trackId);
 }
 
-export function deleteTrackCommand(message) {
-
-}
-
-export function addTactCommand(message) {
+export async function addTactCommand(message, id, user) {
 
 }
 
-export function updateTactCommand(message) {
+export async function updateTactCommand(message, id, user) {
 
 }
 
-export function deleteTactCommand(message) {
-    
-}
-
-export function updateNoteCommand(message) {
+export async function deleteTactCommand(message, id, user) {
 
 }

@@ -3,21 +3,13 @@ export function convertComposition(composition) {
     let res = {
         name: composition.name,
         tacts : composition.tacts.map(tact => convertTact(tact)),
-        tracks : composition.tracks.map(track => convertTrack(track))
+        tracks : composition.tracks.map(track => convertTrack(track)),
+        id : composition._id
     }
     return res;
 }
 
-function convertTact(tact) {
-    let res = {
-        id : tact._id,
-        tactDuration : tact.duration,
-        reprise : tact.reprise
-    }
-    return res;
-}
-
-function convertTrack(track) {
+export function convertTrack(track) {
     let res = {
         id : track._id,
         name : track.name,
@@ -29,11 +21,20 @@ function convertTrack(track) {
     return res;
 }
 
-function convertTrackTact(tact) {
+export function convertTrackTact(tact) {
     let res = {
         id : tact._id,
         tact : tact.tact,
         chords : tact.chords.map(chord => convertChord(chord))
+    }
+    return res;
+}
+
+export function convertTact(tact) {
+    let res = {
+        id : tact._id,
+        tactDuration : tact.duration,
+        reprise : tact.reprise
     }
     return res;
 }

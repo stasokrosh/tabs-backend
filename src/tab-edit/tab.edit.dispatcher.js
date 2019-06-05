@@ -1,20 +1,21 @@
 import { TAB_EDIT_COMMANDS } from './tab.edit.command';
 import * as TabEditController from './tab.edit.controller'
-import { handleError, getUserFromuser, sendErrorResponse, getUserFromAuth } from '../util';
+import { handleError, getUserFromAuth } from '../util';
 
-export default async function tabEditDispatch(res, req) {
+export default async function tabEditDispatch(req, res) {
     try {
         let user = getUserFromAuth(req.decoded);
-        res.send(tabEditDispatchMessage(req.body, req.params.id, user));
+        let body = await tabEditDispatchMessage(req.body, req.params.id, user);
+        if (!body)
+            body = {};
+        res.send(body);
     } catch (err) {
         handleError(err);
     }
 }
 
-function tabEditDispatchMessage(message, id, user) {
-    switch (message.command) {
-        case TAB_EDIT_COMMANDS.COMPOSITION.UPDATE:
-            return TabEditController.updateCompositionCommand(message, id, user);
+async function tabEditDispatchMessage(message, id, user) {
+    switch (message.id) {
         case TAB_EDIT_COMMANDS.TRACK.ADD:
             return TabEditController.addTrackCommand(message, id, user);
         case TAB_EDIT_COMMANDS.TRACK.UPDATE:
@@ -27,7 +28,5 @@ function tabEditDispatchMessage(message, id, user) {
             return TabEditController.updateTactCommand(message, id, user);
         case TAB_EDIT_COMMANDS.TACT.DELETE:
             return TabEditController.deleteTactCommand(message, id, user);
-        case TAB_EDIT_COMMANDS.NOTE.UPDATE:
-            return TabEditController.updateNoteCommand(message, id, user);
     }
 }

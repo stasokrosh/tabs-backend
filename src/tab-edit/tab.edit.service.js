@@ -1,32 +1,32 @@
 import { Composition, Track, TrackTact, Tact } from "./tab.edit.model";
 import { DEFAULT_TRACK_NAME, DEFAULT_TACT_DURATION, DEFAULT_TRACK_INSTRUMENT } from "./util";
 import { isUndefined } from "util";
-import { findTab } from "../tab/tab.service";
 
 export async function createComposition(composition) {
     composition = new Composition(composition);
     await composition.save();
-    let track = new Track({
+    let tact = await addTact(composition._id, {duration : DEFAULT_TACT_DURATION});
+    composition.tacts = [tact];
+    let track = await addTrack(composition._id, {
         name : DEFAULT_TRACK_NAME, 
-        composition : composition._id,
         instrument : DEFAULT_TRACK_INSTRUMENT
     });
-    await track.save();
-    await addTact(composition, {duration : DEFAULT_TACT_DURATION});
+    composition.tracks = [track];
     return composition;
 }
 
-export async function findComposition(tabId, user) {
-    let tab = await findTab(tabId, user);
-    if (!tab)
-        return;
-    let resComposition = await Composition.findById(tab.composition).populate('tacts').exec();
-    resComposition.tracks = await getCompositionTracks(resComposition._id);
+export async function findComposition(id) {
+    return await Composition.findById(id).exec();
+}
+
+export async function getCompositionWithContent(compositionId) {
+    let resComposition = await Composition.findById(compositionId).populate('tacts').exec();
+    resComposition.tracks = await getCompositionTracks(compositionId);
     for (let track of resComposition.tracks) {
         track.tacts = await getTrackTacts(track._id);
     }
     return resComposition;
-}
+} 
 
 export async function updateComposition(id, data) {
     let composition = await Composition.findById(id).exec();
@@ -43,26 +43,56 @@ export async function deleteComposition(id) {
     for (let tact of composition.tacts)
         await Tact.findByIdAndDelete(tact).exec();
     for (let track of tracks) {
-        let tacts = await getTrackTacts(track._id);
-        for (let tact of tacts)
-            await TrackTact.findByIdAndDelete(tact._id).exec();
-        await Track.findByIdAndDelete(track._id).exec();
+        await deleteTrack(track._id);
     }
     await Composition.findByIdAndDelete(id).exec();
 }
 
-export async function addTact(composition, tact, tracks) {
+export async function addTact(compositionId, tact, composition ) {
     tact = new Tact(tact);
     await tact.save();
+    if (!composition)
+        composition = await findComposition(compositionId);
     composition.tacts.push(tact._id);
     await composition.save();
     tact = composition.tacts[composition.tacts.length - 1];
-    if (!tracks)
-        tracks = await getCompositionTracks(composition._id);
+    let tracks = await getCompositionTracks(compositionId);
     for (let track of tracks) {
         let trackTact = new TrackTact({track : track._id, tact : tact._id});
         await trackTact.save();
     }
+    return tact;
+}
+
+export async function addTrack(compositionId, track) {
+    track.composition = compositionId;
+    track = new Track(track);
+    await track.save();
+    let composition = await findComposition(compositionId);
+    for (let tact of composition.tacts) {
+        let trackTact = new TrackTact({track : track._id, tact : tact});
+        await trackTact.save();
+    }
+    track.tacts = await getTrackTacts(track._id);
+    return track;
+}
+
+export async function deleteTrack(compositionId, trackId) {
+    let tacts = await getTrackTacts(trackId);
+    for (let tact of tacts)
+        await TrackTact.findByIdAndDelete(tact._id).exec();
+    await Track.findByIdAndDelete(trackId).exec();
+}
+
+export async function updateTrack(compositionId,trackData) {
+    let track = await Track.findById(trackData.id);
+    if (!track)
+        return;
+    if (!isUndefined(trackData.name))
+        track.name = trackData.name;
+    if (!isUndefined(trackData.instrument))
+        track.instrument = trackData.instrument;
+    return await track.save();
 }
 
 export async function getCompositionTracks(id) {
