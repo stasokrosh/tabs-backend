@@ -13,7 +13,7 @@ export function convertTrack(track) {
     let res = {
         id : track._id,
         name : track.name,
-        tacts : track.tacts.map(tact => convertTrackTact(tact)),
+        tacts : track.tacts ? track.tacts.map(tact => convertTrackTact(tact)) : null,
         instrument : {
             code : track.instrument
         }
@@ -25,6 +25,7 @@ export function convertTrackTact(tact) {
     let res = {
         id : tact._id,
         tact : tact.tact,
+        track : tact.track,
         chords : tact.chords.map(chord => convertChord(chord))
     }
     return res;

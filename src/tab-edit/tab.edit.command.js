@@ -9,5 +9,8 @@ export const TAB_EDIT_COMMANDS = {
         ADD: "ADD_TACT",
         UPDATE: "UPDATE_TACT",
         DELETE: "DELETE_TACT"
+    },
+    TRACK_TACT : {
+        UPDATE: "UPDATE_TRACK_TACT"
     }
 }

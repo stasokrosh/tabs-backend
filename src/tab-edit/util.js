@@ -6,4 +6,4 @@ export const DEFAULT_TACT_DURATION = {
     fraction : 4
 }
 
-export const DEFAULT_TRACK_INSTRUMENT = 1;
+export const DEFAULT_TRACK_INSTRUMENT = 0;

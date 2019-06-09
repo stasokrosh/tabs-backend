@@ -72,7 +72,6 @@ export async function findTabsByGroup(name, user) {
 
 export async function updateTab(id, data, user) {
     let tab = await findTab(id);
-    console.log(tab);
     if (!tab)
         return;
     if (!isUndefined(data.public) && user.name === tab.creator)
@@ -81,7 +80,7 @@ export async function updateTab(id, data, user) {
         tab.users = data.users;
     if (!isUndefined(data.name))
         await updateComposition(tab.composition, data);
-    await tab.save();
+    return await tab.save();
 }
 
 export async function removeTab(id) {

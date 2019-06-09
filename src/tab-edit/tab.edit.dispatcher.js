@@ -28,5 +28,7 @@ async function tabEditDispatchMessage(message, id, user) {
             return TabEditController.updateTactCommand(message, id, user);
         case TAB_EDIT_COMMANDS.TACT.DELETE:
             return TabEditController.deleteTactCommand(message, id, user);
+        case TAB_EDIT_COMMANDS.TRACK_TACT.UPDATE:
+            return TabEditController.updateTrackTactCommand(message, id, user);
     }
 }
