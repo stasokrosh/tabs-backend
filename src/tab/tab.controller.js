@@ -88,14 +88,12 @@ export async function findByGroup(req, res) {
 export async function update(req, res) {
     let auth = req.decoded;
     try {
-        let writers = await findTabWriters(req.params.id)
-        if (!writers) {
-            sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
-        } else if (writers.indexOf(auth.name) !== -1) {
+        let writers = await findTabWriters(req.params.id);
+        if (!auth || writers.indexOf(auth.name) === -1) {
+            sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
+        } else {
             let tab = await updateTab(req.params.id, req.body, auth);
             res.send(tab);
-        } else {
-            sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
         }
     } catch (err) {
         handleError(err, res);

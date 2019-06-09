@@ -8,8 +8,17 @@ export function convertTab(tab, auth) {
         group: tab.group,
         compositionId: tab.composition._id
     }
-    if (auth && auth.name === tab.creator)
-        res.users = tab.users;
+    if (auth ) {
+        
+        if (auth.name === tab.creator) {
+            res.users = tab.users
+        } else {
+            let userIndex = tab.users.findIndex((element) => element.name == auth.name);
+            if (userIndex !== -1) {
+                res.users = [tab.users[userIndex]];
+            }
+        }
+    }
     return res;
 }
 

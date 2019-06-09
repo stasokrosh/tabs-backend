@@ -31,9 +31,9 @@ app.use('/user', UserRouter);
 app.use('/group', GroupRouter);
 app.use('/tab', TabRouter);
 app.use('/auth', AuthRouter);
-app.use('/edit/', TabEditRouter);
 
-//app.ws('/edit.tab', TabEditWebSocket);
+TabEditRouter.ws('/live/:id/:name', TabEditWebSocket);
+app.use('/edit', TabEditRouter);
 
 let port = 1234;
 // https.createServer({ key: fs.readFileSync('server.key'), cert: fs.readFileSync('server.cert')}, app)

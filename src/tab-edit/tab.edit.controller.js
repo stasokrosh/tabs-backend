@@ -1,16 +1,17 @@
 import { getCompositionWithContent, addTrack, updateTrack, deleteTrack, addTact, updateTact, deleteTact, getTactTrackTacts, updateTrackTact } from "./tab.edit.service";
 import { getUserFromAuth, handleError, ERROR_STATUSES, sendErrorResponse } from "../util";
 import { convertComposition, convertTrack, convertTact, convertTrackTact } from "./tab.edit.conveter";
+import { findTab } from "../tab/tab.service";
 
 export async function load(req, res) {
     let auth = req.decoded;
     try {
-        let user = await getUserFromAuth(auth);
-        let composition = await getCompositionWithContent(req.params.id);
-        if (!composition)
+        let user = getUserFromAuth(auth);
+        let tab = await findTab(req.params.id, user);
+        if (!tab)
             sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
-        else
-            res.send(convertComposition(composition));
+        let composition = await getCompositionWithContent(tab.composition._id);
+        res.send(convertComposition(composition));
     } catch (err) {
         handleError(err, res);
     }

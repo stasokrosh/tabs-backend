@@ -1,14 +1,30 @@
 import { TAB_EDIT_COMMANDS } from './tab.edit.command';
 import * as TabEditController from './tab.edit.controller'
-import { handleError, getUserFromAuth } from '../util';
+import { handleError, getUserFromAuth, sendErrorResponse, ERROR_STATUSES } from '../util';
+import { findTab, findTabWriters } from '../tab/tab.service';
+import { Connection } from './tab.edit.socket';
 
 export default async function tabEditDispatch(req, res) {
     try {
-        let user = getUserFromAuth(req.decoded);
-        let body = await tabEditDispatchMessage(req.body, req.params.id, user);
-        if (!body)
-            body = {};
-        res.send(body);
+        let user = await getUserFromAuth(req.decoded);
+        if (!user)
+            sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
+        let tab = await findTab(req.params.id, user);
+        if (!tab) {
+            sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
+        } else {
+            let writers = await findTabWriters(req.params.id);
+            if (writers.indexOf(user.name) === -1) {
+                sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
+            } else {
+                let body = await tabEditDispatchMessage(req.body, tab.composition._id, user);
+                if (!body)
+                    body = {};
+                message.result = body;
+                Connection.broadcast(tab.id, message, user.name);
+                res.send(body);
+            }
+        }
     } catch (err) {
         handleError(err);
     }
