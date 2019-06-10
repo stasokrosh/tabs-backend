@@ -43,6 +43,15 @@ class SocketConnection {
                 }
         }
     }
+
+    isUserConnectedToTab(userName, tabId) {
+        let tabClients = this._clients.get(tabId);
+        if (tabClients) {
+            return tabClients.findIndex((el) => el.userName === userName) !== -1;
+        } else {
+            return false;
+        }
+    }
 }
 
 export const Connection = new SocketConnection();

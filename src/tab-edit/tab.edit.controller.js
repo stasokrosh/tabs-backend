@@ -2,16 +2,23 @@ import { getCompositionWithContent, addTrack, updateTrack, deleteTrack, addTact,
 import { getUserFromAuth, handleError, ERROR_STATUSES, sendErrorResponse } from "../util";
 import { convertComposition, convertTrack, convertTact, convertTrackTact } from "./tab.edit.conveter";
 import { findTab } from "../tab/tab.service";
+import { Connection } from "./tab.edit.socket";
 
 export async function load(req, res) {
     let auth = req.decoded;
     try {
-        let user = getUserFromAuth(auth);
+        let user = await getUserFromAuth(auth);
         let tab = await findTab(req.params.id, user);
-        if (!tab)
+        if (!tab) {
             sendErrorResponse(ERROR_STATUSES.NOT_FOUND, res);
-        let composition = await getCompositionWithContent(tab.composition._id);
-        res.send(convertComposition(composition));
+        } else {
+            if (user && Connection.isUserConnectedToTab(user.name, tab.id)) {
+                sendErrorResponse(ERROR_STATUSES.ENTITY_EXISTS, res);
+            } else {
+                let composition = await getCompositionWithContent(tab.composition._id);
+                res.send(convertComposition(composition));
+            }
+        }
     } catch (err) {
         handleError(err, res);
     }
@@ -36,7 +43,7 @@ export async function addTactCommand(message, id, user) {
     let trackTacts = await getTactTrackTacts(tact._id);
     return {
         tact: convertTact(tact),
-        trackTacts : trackTacts.map(trackTact => convertTrackTact(trackTact))
+        trackTacts: trackTacts.map(trackTact => convertTrackTact(trackTact))
     }
 }
 
