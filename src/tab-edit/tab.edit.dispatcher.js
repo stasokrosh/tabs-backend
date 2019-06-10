@@ -17,7 +17,8 @@ export default async function tabEditDispatch(req, res) {
             if (writers.indexOf(user.name) === -1) {
                 sendErrorResponse(ERROR_STATUSES.FORBIDDEN, res);
             } else {
-                let body = await tabEditDispatchMessage(req.body, tab.composition._id, user);
+                let message = req.body;
+                let body = await tabEditDispatchMessage(message, tab.composition._id, user);
                 if (!body)
                     body = {};
                 message.result = body;

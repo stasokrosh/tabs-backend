@@ -17,7 +17,6 @@ class SocketConnection {
             ws.on("close", () => {
                 this.disconnect(name, tabId);
             });
-            console.log("connected");
         } catch (err) {
             console.log(err);
         }
@@ -31,7 +30,6 @@ class SocketConnection {
                 tabClients.splice(clientIndex, 1);
             }
         }
-        console.log("disconnected");
     }
 
     broadcast(tabId, message, sender) {
